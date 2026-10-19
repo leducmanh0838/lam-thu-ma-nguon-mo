@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState } from "react";
 
 export interface Product {
     id: number;
@@ -164,16 +167,128 @@ export const products: Product[] = [
     }
 ];
 
-// Hàm format tiền tệ VND
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
 };
 
 export default function ProductExercisePage() {
-    // Lấy danh sách các danh mục độc nhất
+    const categories = ["Tất cả", ...Array.from(new Set(products.map((product) => product.category)))];
+    const [activeCategory, setActiveCategory] = useState("Tất cả");
+
+    const filteredProducts = useMemo(() => {
+        if (activeCategory === "Tất cả") return products;
+        return products.filter((product) => product.category === activeCategory);
+    }, [activeCategory]);
+
     return (
         <div className="min-h-screen bg-bg text-text pb-16">
-            VIẾT CODE NGAY TẠI ĐÂY
+            <header className="border-b border-border bg-surface sticky top-0 z-50 shadow-xs">
+                <div className="max-w-[1200px] mx-auto px-4 h-[72px] flex items-center justify-between">
+                    <h1 className="text-xl md:text-2xl font-bold font-heading">
+                        TechGadget <span className="text-primary">Store</span>
+                    </h1>
+                    <div className="text-sm text-muted">
+                        Tổng số: <strong className="text-text">{filteredProducts.length} sản phẩm</strong>
+                    </div>
+                </div>
+            </header>
+
+            <main className="max-w-[1200px] mx-auto px-4 mt-8">
+                <div className="bg-surface rounded-lg p-6 md:p-8 mb-8 border border-border flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <span className="inline-block bg-primary-soft text-primary text-xs font-semibold px-3 py-1 rounded-full mb-3">
+                            Bộ sưu tập mới nhất 2026
+                        </span>
+                        <h2 className="text-2xl md:text-3xl font-bold mb-2">Phụ kiện & Thiết bị Công nghệ Cao cấp</h2>
+                        <p className="text-muted text-sm md:text-base max-w-2xl">
+                            Trải nghiệm không gian làm việc tối ưu với các sản phẩm chính hãng, chất lượng hàng đầu được tuyển chọn riêng cho bạn.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
+                    {categories.map((category) => (
+                        <button
+                            key={category}
+                            type="button"
+                            onClick={() => setActiveCategory(category)}
+                            className={`px-4 py-2 rounded-sm text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
+                                activeCategory === category
+                                    ? "bg-primary text-primary-on shadow-xs"
+                                    : "bg-surface border border-border hover:border-primary text-muted hover:text-text"
+                            }`}
+                        >
+                            {category}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredProducts.map((product) => {
+                        const discountPercent = Math.round(
+                            ((product.originalPrice - product.price) / product.originalPrice) * 100
+                        );
+
+                        return (
+                            <div
+                                key={product.id}
+                                className="bg-surface rounded-md border border-border overflow-hidden flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group"
+                            >
+                                <div className="relative aspect-video w-full overflow-hidden bg-surface-2">
+                                    <img
+                                        src={product.image}
+                                        alt={product.name}
+                                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                                    />
+                                    {discountPercent > 0 && (
+                                        <span className="absolute top-3 left-3 bg-accent text-[#12142a] text-xs font-bold px-2.5 py-1 rounded-sm shadow-xs">
+                                            -{discountPercent}%
+                                        </span>
+                                    )}
+                                    <span className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-xs text-white text-xs px-2.5 py-0.5 rounded-sm">
+                                        {product.category}
+                                    </span>
+                                </div>
+
+                                <div className="p-5 flex flex-col flex-grow">
+                                    <div className="flex items-center gap-1 mb-2 text-sm text-accent">
+                                        <span>★</span>
+                                        <span className="font-semibold text-text">{product.rating}</span>
+                                    </div>
+
+                                    <h3 className="font-heading font-bold text-base mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+                                        <Link href={`/products/${product.id}`}>
+                                            {product.name}
+                                        </Link>
+                                    </h3>
+
+                                    <p className="text-muted text-xs md:text-sm mb-4 line-clamp-2 flex-grow">
+                                        {product.description}
+                                    </p>
+
+                                    <div className="pt-4 border-t border-border flex items-center justify-between mt-auto">
+                                        <div>
+                                            <div className="text-primary font-bold text-base">
+                                                {formatCurrency(product.price)}
+                                            </div>
+                                            <div className="text-muted text-xs line-through">
+                                                {formatCurrency(product.originalPrice)}
+                                            </div>
+                                        </div>
+
+                                        <Link
+                                            href={`/products/${product.id}`}
+                                            className="bg-primary-soft hover:bg-primary text-primary hover:text-primary-on text-xs font-semibold px-4 py-2 rounded-sm transition-colors"
+                                        >
+                                            Xem chi tiết
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </main>
         </div>
     );
 }
